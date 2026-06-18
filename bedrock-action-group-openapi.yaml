@@ -1,0 +1,111 @@
+openapi: 3.0.1
+info:
+  title: QuickSlot DevOps Co-Pilot Action Group
+  version: 0.1.0
+paths:
+  /health/summary:
+    post:
+      operationId: summarizeHealth
+      description: Summarize active QuickSlot CloudWatch alarms and recent service log findings.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: QuickSlot is seeing a spike in booking errors in AZ-1
+      responses:
+        "200":
+          description: Health summary
+          content:
+            application/json:
+              schema:
+                type: object
+  /ssm/check:
+    post:
+      operationId: runSsmHealthCheck
+      description: Run an allow-listed SSM health check against a private QuickSlot instance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              properties:
+                target:
+                  type: string
+                  example: i-0123456789abcdef0
+                check_name:
+                  type: string
+                  enum: [system-health, app-port-check, docker-health, cloud-init-status]
+                  default: system-health
+      responses:
+        "200":
+          description: SSM command result
+          content:
+            application/json:
+              schema:
+                type: object
+  /secrets/validate:
+    post:
+      operationId: validateSecretPolicy
+      description: Validate Secrets Manager metadata and naming policy without reading secret values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [secret_name]
+              properties:
+                secret_name:
+                  type: string
+                  example: quickslot/app/prod/current
+      responses:
+        "200":
+          description: Secret validation result
+          content:
+            application/json:
+              schema:
+                type: object
+  /iac/environment:
+    post:
+      operationId: requestEnvironmentProvisioning
+      description: Trigger a guarded IaC Lambda request for prod-like temporary dev environments.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [environment, template]
+              properties:
+                action:
+                  type: string
+                  enum: [plan, apply]
+                  default: plan
+                environment:
+                  type: string
+                  enum: [dev]
+                template:
+                  type: string
+                  enum: [quickslot-dev, quickslot-prod-like-dev, quickslot-observability]
+                ttl_hours:
+                  type: integer
+                  minimum: 1
+                  maximum: 72
+                  default: 24
+                variables:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: IaC Lambda invocation result
+          content:
+            application/json:
+              schema:
+                type: object
