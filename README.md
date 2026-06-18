@@ -2,7 +2,7 @@
 
 An incident responder and platform engineering agent for the QuickSlot AWS stack.
 
-The app is intentionally self-contained in this `Agent` folder. It can run in mock mode for local demos, or use `boto3` in AWS mode to read CloudWatch alarms/logs, receive SNS alert payloads, run guarded SSM health checks, validate Secrets Manager configuration without printing secret values, and trigger an IaC Lambda action.
+The app is intentionally self-contained in this `Agent` folder. It runs in AWS mode by default and uses `boto3` to read CloudWatch alarms/logs, receive SNS alert payloads, run guarded SSM health checks, validate Secrets Manager configuration without printing secret values, and trigger an IaC Lambda action.
 
 ## What It Can Do
 
@@ -42,10 +42,11 @@ cd Agent
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+copy .env.example .env
 python -m app.cli "QuickSlot is seeing a spike in booking errors in AZ-1"
 ```
 
-By default, `QUICKSLOT_AGENT_MODE=mock`, so no AWS calls are made.
+By default, `QUICKSLOT_AGENT_MODE=aws` and `AWS_REGION=us-east-1`, so the runner needs AWS credentials or an EC2 instance role.
 
 ## Run The API
 
@@ -70,7 +71,7 @@ Set these values in the environment or copy `.env.example` to `.env` for your ow
 
 ```powershell
 $env:QUICKSLOT_AGENT_MODE="aws"
-$env:AWS_REGION="ap-south-1"
+$env:AWS_REGION="us-east-1"
 $env:QUICKSLOT_IAC_LAMBDA_NAME="quickslot-iac-runner"
 ```
 

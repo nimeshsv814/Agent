@@ -20,6 +20,7 @@
       ],
       "Resource": [
         "arn:aws:secretsmanager:*:*:secret:quickslot/*",
+        "arn:aws:secretsmanager:*:*:secret:quickslot-*",
         "arn:aws:secretsmanager:*:*:secret:smart-parking/*"
       ]
     },

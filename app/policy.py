@@ -30,8 +30,8 @@ def validate_ssm_check(check_name: str) -> PolicyDecision:
 
 def validate_secret_name(secret_name: str) -> PolicyDecision:
     normalized = secret_name.lower()
-    if not normalized.startswith(("quickslot/", "smart-parking/")):
-        return PolicyDecision(False, "Secret must be scoped under quickslot/ or smart-parking/.")
+    if not normalized.startswith(("quickslot/", "quickslot-", "smart-parking/", "smart-parking-")):
+        return PolicyDecision(False, "Secret must be scoped under quickslot or smart-parking naming.")
     return PolicyDecision(True, "Secret scope is valid.")
 
 

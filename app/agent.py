@@ -75,10 +75,9 @@ class DevOpsCopilot:
         match = re.search(r"\bi-[a-f0-9]{8,17}\b", message)
         return match.group(0) if match else "i-mockquickslot01"
 
-    @staticmethod
-    def _extract_secret_name(message: str) -> str:
-        match = re.search(r"(quickslot|smart-parking)/[A-Za-z0-9_./-]+", message)
-        return match.group(0) if match else "quickslot/app/prod/current"
+    def _extract_secret_name(self, message: str) -> str:
+        match = re.search(r"(quickslot|smart-parking)[A-Za-z0-9_./-]*", message)
+        return match.group(0) if match else self.settings.default_secret_name
 
     @staticmethod
     def _json_or_text(message: str) -> dict[str, Any] | str:
