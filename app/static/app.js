@@ -95,7 +95,7 @@ function fillRuntime(config) {
   els.lambdaName.textContent = config.iac_lambda_name;
   document.querySelector("#regionMetric").textContent = config.region;
   document.querySelector("#secretMetric").textContent = config.default_secret_name;
-  document.querySelector("#secretName").value = config.default_secret_name;
+  document.querySelector("#secretName").value = config.default_secret_name || "quickslot-06";
   document.querySelector("#ctxMode").textContent = config.mode;
   document.querySelector("#ctxRegion").textContent = config.region;
   document.querySelector("#ctxLambda").textContent = config.iac_lambda_name;
