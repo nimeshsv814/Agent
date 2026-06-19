@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuickSlot DevOps Co-Pilot</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="nav-rail" aria-label="Agent navigation">
+        <div class="brand-mark">QS</div>
+        <button class="nav-btn active" type="button" data-view="console" title="Console">⌁</button>
+        <button class="nav-btn" type="button" data-view="tools" title="Tools">⚙</button>
+        <button class="nav-btn" type="button" data-view="context" title="Context">i</button>
+      </aside>
+
+      <main class="page">
+        <header class="masthead">
+          <div>
+            <p class="eyebrow">QuickSlot Platform Engineering</p>
+            <h1>DevOps Co-Pilot</h1>
+          </div>
+          <div class="status-strip" aria-live="polite">
+            <span id="mode">aws</span>
+            <span id="region">us-east-1</span>
+            <span id="lambdaName">quickslot-iac-runner</span>
+            <span id="health" class="health pending">checking</span>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Agent summary">
+          <article class="metric">
+            <span class="metric-label">Active Alarms</span>
+            <strong id="alarmCount">-</strong>
+            <small>CloudWatch</small>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Region</span>
+            <strong id="regionMetric">us-east-1</strong>
+            <small>AWS provider</small>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Secret Scope</span>
+            <strong id="secretMetric">quickslot-05</strong>
+            <small>metadata only</small>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Action Mode</span>
+            <strong>guarded</strong>
+            <small>SSM and IaC policy</small>
+          </article>
+        </section>
+
+        <section class="view active" id="view-console">
+          <div class="console-layout">
+            <section class="conversation-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Incident Console</h2>
+                  <p>Ask the Agent to triage, summarize, validate, or trigger a guarded action.</p>
+                </div>
+                <button id="clearBtn" class="ghost" type="button">Clear</button>
+              </div>
+
+              <div id="transcript" class="transcript" aria-live="polite">
+                <article class="bubble agent">
+                  <span class="bubble-role">Agent</span>
+                  <p>I am connected to QuickSlot operations. Send an incident, health request, SSM check, secret validation, or dev environment request.</p>
+                </article>
+              </div>
+
+              <form id="chatForm" class="composer">
+                <textarea id="message" rows="3" spellcheck="true" placeholder="QuickSlot is seeing a spike in booking errors in AZ-1"></textarea>
+                <div class="composer-actions">
+                  <button type="button" class="chip" data-prompt="summarize active system health issues">System health</button>
+                  <button type="button" class="chip" data-prompt="QuickSlot is seeing a spike in booking errors in AZ-1">Booking incident</button>
+                  <button type="button" class="chip" data-prompt="validate secret quickslot-05">Validate secret</button>
+                  <button type="submit" class="primary">Send</button>
+                </div>
+              </form>
+            </section>
+
+            <aside class="right-column">
+              <section class="panel">
+                <h2>Runbook Shortcuts</h2>
+                <div class="shortcut-list">
+                  <button type="button" data-prompt="summarize active system health issues">Summarize active alarms</button>
+                  <button type="button" data-prompt="run ssm health check on i-0123456789abcdef0">Run private instance health check</button>
+                  <button type="button" data-prompt="spin up a temporary dev environment matching production">Plan temporary dev environment</button>
+                </div>
+              </section>
+
+              <section class="panel">
+                <h2>Active Alarms</h2>
+                <div id="alarmList" class="alarm-list">
+                  <span class="muted">Loading alarms...</span>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-tools">
+          <div class="tool-grid">
+            <section class="panel">
+              <h2>SSM Session Manager Check</h2>
+              <form id="ssmForm" class="form-stack">
+                <label>
+                  <span>Target Instance ID</span>
+                  <input id="ssmTarget" type="text" placeholder="i-0123456789abcdef0" />
+                </label>
+                <label>
+                  <span>Check</span>
+                  <select id="ssmCheck">
+                    <option value="system-health">system-health</option>
+                    <option value="app-port-check">app-port-check</option>
+                    <option value="docker-health">docker-health</option>
+                    <option value="cloud-init-status">cloud-init-status</option>
+                  </select>
+                </label>
+                <button type="submit" class="primary full">Run Check</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <h2>Secrets Manager Policy</h2>
+              <form id="secretForm" class="form-stack">
+                <label>
+                  <span>Secret Name</span>
+                  <input id="secretName" type="text" value="quickslot-05" />
+                </label>
+                <button type="submit" class="primary full">Validate Metadata</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <h2>IaC Action Group</h2>
+              <form id="iacForm" class="form-stack">
+                <label>
+                  <span>Action</span>
+                  <select id="iacAction">
+                    <option value="plan">plan</option>
+                    <option value="apply">apply</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Temporary Dev TTL</span>
+                  <input id="ttlHours" type="number" min="1" max="72" value="24" />
+                </label>
+                <button type="submit" class="primary full">Invoke Lambda</button>
+              </form>
+            </section>
+          </div>
+
+          <section class="panel result-dock">
+            <div class="panel-head compact">
+              <h2>Tool Output</h2>
+              <span class="muted">Latest structured response</span>
+            </div>
+            <div id="toolOutput" class="output-box">No tool has been run yet.</div>
+          </section>
+        </section>
+
+        <section class="view" id="view-context">
+          <div class="context-grid">
+            <section class="panel">
+              <h2>Agent Runtime</h2>
+              <dl class="runtime-list">
+                <div><dt>Mode</dt><dd id="ctxMode">aws</dd></div>
+                <div><dt>Region</dt><dd id="ctxRegion">us-east-1</dd></div>
+                <div><dt>IaC Lambda</dt><dd id="ctxLambda">quickslot-iac-runner</dd></div>
+                <div><dt>Default Secret</dt><dd id="ctxSecret">quickslot-05</dd></div>
+              </dl>
+            </section>
+
+            <section class="panel">
+              <h2>CloudWatch Log Groups</h2>
+              <div id="logGroups" class="log-groups"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

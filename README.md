@@ -55,6 +55,18 @@ cd Agent
 uvicorn app.api:app --reload --port 8010
 ```
 
+Open the dashboard:
+
+```text
+http://127.0.0.1:8010/
+```
+
+On the Terraform-created EC2 instance, Nginx exposes the same dashboard on public HTTP:
+
+```text
+http://AGENT_PUBLIC_IP/
+```
+
 Example request:
 
 ```powershell
