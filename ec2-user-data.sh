@@ -10,21 +10,14 @@ REPO_URL="https://github.com/nimeshsv814/Agent.git"
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -y
-apt-get install -y git nginx python3 python3-pip python3-venv snapd
+apt-get install -y curl git nginx python3 python3-pip python3-venv
 
-systemctl enable snapd
-systemctl start snapd
-
-if ! systemctl list-unit-files | grep -q '^snap.amazon-ssm-agent.amazon-ssm-agent.service'; then
-  for attempt in 1 2 3 4 5 6; do
-    snap wait system seed.loaded && break
-    sleep 10
-  done
-  snap install amazon-ssm-agent --classic
-fi
-
-systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
-systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
+SSM_DEB="/tmp/amazon-ssm-agent.deb"
+curl -fsSL "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb" -o "$SSM_DEB"
+dpkg -i "$SSM_DEB" || apt-get install -f -y
+systemctl daemon-reload
+systemctl enable amazon-ssm-agent
+systemctl restart amazon-ssm-agent
 
 if [ ! -d "$APP_DIR/.git" ]; then
   rm -rf "$APP_DIR"
