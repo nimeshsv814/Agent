@@ -28,6 +28,14 @@ async function requestJson(path, body) {
   return payload;
 }
 
+async function requestJsonSafe(path, fallback) {
+  try {
+    return await requestJson(path);
+  } catch (error) {
+    return { ...fallback, error: error.message || String(error) };
+  }
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -65,6 +73,10 @@ function renderToolOutput(title, payload) {
 
 function renderAlarms(payload) {
   els.alarmCount.textContent = String(payload.count ?? 0);
+  if (payload.error) {
+    els.alarmList.innerHTML = `<span class="muted">${escapeHtml(payload.error)}</span>`;
+    return;
+  }
   if (!payload.alarms?.length) {
     els.alarmList.innerHTML = `<span class="muted">No active alarms reported.</span>`;
     return;
@@ -106,17 +118,24 @@ function fillRuntime(config) {
 }
 
 async function loadRuntime() {
-  try {
-    const [health, config, alarms] = await Promise.all([requestJson("/health"), requestJson("/config"), requestJson("/alarms")]);
-    state.config = config;
-    els.health.textContent = health.status;
-    els.health.className = "health ok";
-    fillRuntime(config);
-    renderAlarms(alarms);
-  } catch (error) {
-    els.health.textContent = "offline";
-    els.health.className = "health bad";
-    els.alarmList.innerHTML = `<span class="muted">${escapeHtml(error.message || "Unable to load alarms.")}</span>`;
+  const health = await requestJsonSafe("/health", { status: "offline" });
+  const config = await requestJsonSafe("/config", {
+    mode: "aws",
+    region: "us-east-1",
+    iac_lambda_name: "quickslot-iac-runner",
+    default_secret_name: "quickslot-06",
+    log_groups: {},
+  });
+  const alarms = await requestJsonSafe("/alarms", { count: 0, alarms: [] });
+
+  state.config = config;
+  els.health.textContent = health.status || "offline";
+  els.health.className = health.status === "ok" ? "health ok" : "health bad";
+  fillRuntime(config);
+  renderAlarms(alarms);
+
+  if (config.error) {
+    addBubble("agent", `Runtime config warning: ${config.error}`, { error: true });
   }
 }
 

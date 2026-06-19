@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -65,11 +66,19 @@ def config() -> dict[str, Any]:
 @app.get("/alarms")
 def alarms() -> dict[str, Any]:
     provider = build_agent().provider
-    active_alarms = provider.list_active_alarms()
-    return {
-        "count": len(active_alarms),
-        "alarms": [alarm.__dict__ for alarm in active_alarms],
-    }
+    try:
+        active_alarms = provider.list_active_alarms()
+        return {
+            "count": len(active_alarms),
+            "alarms": jsonable_encoder(active_alarms),
+            "error": None,
+        }
+    except Exception as exc:
+        return {
+            "count": 0,
+            "alarms": [],
+            "error": str(exc),
+        }
 
 
 @app.post("/chat")
