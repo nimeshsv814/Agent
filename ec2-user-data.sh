@@ -1,21 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_USER="ubuntu"
+APP_USER="ec2-user"
 APP_DIR="/opt/quickslot-agent"
 AGENT_DIR="$APP_DIR"
 
 REPO_URL="https://github.com/nimeshsv814/Agent.git"
 
-export DEBIAN_FRONTEND=noninteractive
+dnf update -y
+dnf install -y git nginx python3 python3-pip
 
-apt-get update -y
-apt-get install -y curl git nginx python3 python3-pip python3-venv
-
-SSM_DEB="/tmp/amazon-ssm-agent.deb"
-curl -fsSL "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb" -o "$SSM_DEB"
-dpkg -i "$SSM_DEB" || apt-get install -f -y
-systemctl daemon-reload
 systemctl enable amazon-ssm-agent
 systemctl restart amazon-ssm-agent
 
@@ -53,7 +47,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=ubuntu
+User=ec2-user
 WorkingDirectory=$AGENT_DIR
 EnvironmentFile=$AGENT_DIR/.env
 ExecStart=$AGENT_DIR/.venv/bin/uvicorn app.api:app --host 127.0.0.1 --port 8010
@@ -64,10 +58,9 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-cat > /etc/nginx/sites-available/quickslot-agent <<'EOF'
+cat > /etc/nginx/conf.d/quickslot-agent.conf <<'EOF'
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
     server_name _;
 
     location / {
@@ -81,8 +74,7 @@ server {
 }
 EOF
 
-rm -f /etc/nginx/sites-enabled/default
-ln -sf /etc/nginx/sites-available/quickslot-agent /etc/nginx/sites-enabled/quickslot-agent
+rm -f /etc/nginx/conf.d/default.conf
 nginx -t
 
 systemctl daemon-reload
